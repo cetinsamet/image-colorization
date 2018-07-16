@@ -140,7 +140,7 @@ def main():
 
     # SET TRAINING PARAMETERS
     BATCH_SIZE  = 50
-    EPOCH       = 250
+    EPOCH       = 5
 
     model       = ConvNet().cuda()
     loss_fn     = torch.nn.MSELoss()
@@ -187,7 +187,7 @@ def main():
 
     # UPSAMPLE VALIDATION PREDICTIONS
     # Shape -> (100, 256, 256, 2)
-    pred_valid = np.asarray([np.expand_dims(upsample(pred), axis=0)\
+    pred_valid = np.asarray([np.expand_dims(upsample(np.asarray(pred, dtype=np.float)), axis=0)\
                                 for pred in pred_valid])
 
     # INSERT LIGHT CHANNEL TO VALIDATION PREDICTIONS
