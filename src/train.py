@@ -96,7 +96,11 @@ def main():
     # ---------------------------------------------------------------------------------------------------------------- #
 
     # LOAD 64X64 COLOR IMAGES
-    color64_images  = [(color64_imagename, cvt2Lab(read_image(COLOR_64_IMAGE_PATH+color64_imagename))[1]) for color64_imagename in os.listdir(COLOR_64_IMAGE_PATH)]
+    color64_images = list()
+    for color64_imagename in os.listdir(COLOR_64_IMAGE_PATH):
+        color64_image, s    = read_image(COLOR_64_IMAGE_PATH+color64_imagename)
+        color64_image       = (color64_imagename, cvt2Lab(color64_image)[1])
+        color64_images.append(color64_image)
     color64_images  = sorted(color64_images, key=lambda x:x[0])
     print("-> 64x64 color images are loded")
 
