@@ -3,10 +3,10 @@ from skimage.transform import rescale, resize
 import numpy as np
 
 
-def read_image(filename, size=(256, 256)):
+def read_image(filename, size=(256, 256), training=False):
     img = io.imread(filename)
     real_size = img.shape
-    if img.shape!=size:
+    if img.shape!=size and not training:
         img     = resize(img, size, anti_aliasing=False)
     if len(img.shape) == 2:
         img = np.stack([img, img, img], 2)
