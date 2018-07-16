@@ -140,7 +140,7 @@ def main():
 
     # SET TRAINING PARAMETERS
     BATCH_SIZE  = 50
-    EPOCH       = 5
+    EPOCH       = 250
 
     model       = ConvNet().cuda()
     loss_fn     = torch.nn.MSELoss()
