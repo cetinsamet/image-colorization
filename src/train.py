@@ -1,9 +1,10 @@
 import os
 import numpy as np
+import subprocess
 import torch
 
 from decimal import Decimal
-from utils import read_image, cvt2Lab
+from utils import read_image, cvt2Lab, upsample, cvt2rgb
 
 
 def format_e(n):
@@ -97,9 +98,9 @@ def main():
     y_train, y_valid    = np.empty([1, 64, 64, 2]), np.empty([1, 64, 64, 2])
     for color64_imagename, color64_image in color64_images:
         if color64_imagename in train_imagename:
-            y_train = np.concatenate([y_train, np.reshape(color64_image, (1,) + y_train.shape[1:])])
+            y_train = np.concatenate([y_train, np.expand_dims(color64_image, axis=0)])
         if color64_imagename in valid_imagename:
-            y_valid = np.concatenate([y_valid, np.reshape(color64_image, (1,) + y_valid.shape[1:])])
+            y_valid = np.concatenate([y_valid, np.expand_dims(color64_image, axis=0)])
     y_train, y_valid = np.rollaxis(y_train[1:], 3, 1), np.rollaxis(y_valid[1:], 3, 1)
     print("-> 64x64 color images are splitted to datasets")
     print()
@@ -163,6 +164,32 @@ def main():
 
         print("%d\ttrain loss : %s\t%s" % (epoch+1, str(format(running_train_loss / (x_train.shape[0] / BATCH_SIZE), '.8g')), str(format(running_valid_loss / (x_valid.shape[0] / BATCH_SIZE), '.8g'))))
 
+    pred_valid = np.asarray([model(torch.autograd.Variable(torch.from_numpy(x_valid[i:i + BATCH_SIZE]).float().cuda(), requires_grad=False)).cpu().data.numpy()\
+                                for i in range(0, valid_size, BATCH_SIZE)])
+
+    pred_valid = np.asarray([np.transpose(pred, (0, 2, 3, 1))\
+                                for pred in pred_valid])
+
+    pred_valid = np.asarray([np.expand_dims(upsample(pred), axis=0)\
+                                for pred in pred_valid])
+
+    pred_valid = np.asarray([np.expand_dims(np.insert(pred, 0, x_valid[i], axis=2), axis=0)\
+                                for pred in pred_valid])
+
+    pred_valid = np.asarray([np.expand_dims((cvt2rgb(pred) * 255.).astype(np.uint8), axis=0)\
+                                for pred in pred_valid])
+
+    np.save('validation_estimations.npy', pred_valid)
+
+
+    print("Validation acc: ")
+    subprocess.call(["python3", "evaluate.py", "validation_estimations.npy", "valid.txt"])
+    print()
+
+    try:
+        os.remove('validation_estimations.npy')
+    except:
+        pass
 
     torch.save(model.state_dict(), MODEL_PATH)
     print("-> image colorization model is saved to %s" % MODEL_PATH)
