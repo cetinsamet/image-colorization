@@ -15,8 +15,9 @@ def main(argv):
     
     acc = 0
     for i, file in enumerate(files):
-        cur = read_image("../data/color_256/" + file.rstrip(), training=True).reshape(-1).astype(np.int64)
-        est = estimations[i].reshape(-1).astype(np.int64)
+        cur, s  = read_image("../data/color_256/" + file.rstrip(), training=True)
+        cur     = np.reshape(cur, -1).astype(np.int64)
+        est     = estimations[i].reshape(-1).astype(np.int64)
     
         cur_acc = (np.abs(cur - est) < 12).sum() / cur.shape[0]
         acc += cur_acc
