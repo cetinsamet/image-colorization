@@ -11,7 +11,9 @@ def format_e(n):
     a = '%E' % n
     return a.split('E')[0].rstrip('0').rstrip('.') + 'E' + a.split('E')[1]
 
+
 class ConvNet(torch.nn.Module):
+    """convolutional network that performs image colorization"""
     def __init__(self, num_classes=10):
         super(ConvNet, self).__init__()
         self.layer1 = torch.nn.Sequential(
@@ -64,7 +66,11 @@ def main():
     # ---------------------------------------------------------------------------------------------------------------- #
 
     # LOAD GRAY IMAGES
-    gray_images = [(gray_imagename, cvt2Lab(read_image(GRAY_IMAGE_PATH+gray_imagename))[0]) for gray_imagename in os.listdir(GRAY_IMAGE_PATH)]
+    gray_images = list()
+    for gray_imagename in os.listdir(GRAY_IMAGE_PATH):
+        gray_image, s   = read_image(GRAY_IMAGE_PATH+gray_imagename)
+        gray_image      = (gray_imagename, cvt2Lab(gray_image)[0])
+        gray_images.append(gray_image)
     gray_images = sorted(gray_images, key=lambda x: x[0])
     print("-> gray images are loded")
 
@@ -128,6 +134,7 @@ def main():
     print("-> valid Size : %d" % valid_size)
     print()
 
+    # SET TRAINING PARAMETERS
     BATCH_SIZE  = 50
     EPOCH       = 250
 
@@ -135,7 +142,7 @@ def main():
     loss_fn     = torch.nn.MSELoss()
     optimizer   = torch.optim.RMSprop(model.parameters(), lr=1e-4)
 
-
+    ### TRAINING ### TRAINING ### TRAINING ### TRAINING ### TRAINING ### TRAINING ### TRAINING ### TRAINING ### TRAINING ###
     for epoch in range(EPOCH):
         running_train_loss = .0
         running_valid_loss = .0
@@ -164,24 +171,34 @@ def main():
 
         print("%d\ttrain loss : %s\t%s" % (epoch+1, str(format(running_train_loss / (x_train.shape[0] / BATCH_SIZE), '.8g')), str(format(running_valid_loss / (x_valid.shape[0] / BATCH_SIZE), '.8g'))))
 
+    # GET VALIDATION PREDICTIONS
+    # Shape -> (100, 2, 64, 64)
     pred_valid = np.asarray([model(torch.autograd.Variable(torch.from_numpy(x_valid[i:i + BATCH_SIZE]).float().cuda(), requires_grad=False)).cpu().data.numpy()\
                                 for i in range(0, valid_size, BATCH_SIZE)])
 
+    # ADJUST VALIDATION PREDICTION DIMENSIONS
+    # Shape -> (100, 64, 64, 2)
     pred_valid = np.asarray([np.transpose(pred, (0, 2, 3, 1))\
                                 for pred in pred_valid])
 
+    # UPSAMPLE VALIDATION PREDICTIONS
+    # Shape -> (100, 256, 256, 2)
     pred_valid = np.asarray([np.expand_dims(upsample(pred), axis=0)\
                                 for pred in pred_valid])
 
+    # INSERT LIGHT CHANNEL TO VALIDATION PREDICTIONS
+    # Shape -> (100, 256, 256, 3)
     pred_valid = np.asarray([np.expand_dims(np.insert(pred, 0, x_valid[i], axis=2), axis=0)\
                                 for pred in pred_valid])
 
+    # CONVERT VALIDATION PREDICTIONS TO RGB IMAGES
+    # Shape -> (100, 256, 256, 3)
     pred_valid = np.asarray([np.expand_dims((cvt2rgb(pred) * 255.).astype(np.uint8), axis=0)\
                                 for pred in pred_valid])
 
     np.save('validation_estimations.npy', pred_valid)
 
-
+    # DISPLAY VALIDATION ACCURACY
     print("Validation acc: ")
     subprocess.call(["python3", "evaluate.py", "validation_estimations.npy", "valid.txt"])
     print()
@@ -191,8 +208,10 @@ def main():
     except:
         pass
 
+    # SAVE PYTORCH MODEL
     torch.save(model.state_dict(), MODEL_PATH)
     print("-> image colorization model is saved to %s" % MODEL_PATH)
+
     return
 
 
