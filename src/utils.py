@@ -23,4 +23,4 @@ def cvt2rgb(image):
 
 
 def upsample(image):
-    return rescale(image, 4, mode='constant', order=3)
+    return rescale(image, 4, mode='constant', order=3, anti_aliasing=False)

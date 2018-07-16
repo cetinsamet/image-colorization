@@ -192,8 +192,8 @@ def main():
 
     # INSERT LIGHT CHANNEL TO VALIDATION PREDICTIONS
     # Shape -> (100, 256, 256, 3)
-    pred_valid = np.asarray([np.expand_dims(np.insert(pred, 0, x_valid[i], axis=2), axis=0)\
-                                for pred in pred_valid])
+    pred_valid = np.asarray([np.expand_dims(np.insert(pred_valid[i], 0, x_valid[i], axis=2), axis=0)\
+                                for i in range(len(pred_valid))])
 
     # CONVERT VALIDATION PREDICTIONS TO RGB IMAGES
     # Shape -> (100, 256, 256, 3)
