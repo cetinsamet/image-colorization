@@ -1,5 +1,5 @@
 # image-colorization
-Simple image colorization with Pytorch to colorize black-and-white landscape images 
+Simple image colorization with Pytorch to colorize black-and-white landscape images   
 A convolutional neural network is trained with 800 grayscale landscape images to perform image colorization on gray images.
   
 ## Usage  
