@@ -177,28 +177,28 @@ def main():
 
     # GET VALIDATION PREDICTIONS
     # Shape -> (100, 2, 64, 64)
-    pred_valid = np.asarray([model(torch.autograd.Variable(torch.from_numpy(x_valid[i:i + BATCH_SIZE]).float().cuda(), requires_grad=False)).cpu().data.numpy()\
-                                for i in range(0, valid_size, BATCH_SIZE)])
+    pred_valid = np.vstack([model(torch.autograd.Variable(torch.from_numpy(x_valid[i:i + BATCH_SIZE]).float().cuda(),
+                                                          requires_grad=False)).cpu().data.numpy() \
+                            for i in range(0, valid_size, BATCH_SIZE)])
 
     # ADJUST VALIDATION PREDICTION DIMENSIONS
     # Shape -> (100, 64, 64, 2)
-    pred_valid = np.asarray([np.transpose(pred, (0, 2, 3, 1))\
-                                for pred in pred_valid])
+    pred_valid = np.transpose(pred_valid, (0, 2, 3, 1))
 
     # UPSAMPLE VALIDATION PREDICTIONS
     # Shape -> (100, 256, 256, 2)
-    pred_valid = np.asarray([np.expand_dims(upsample(np.asarray(pred, dtype=np.float)), axis=0)\
-                                for pred in pred_valid])
+    pred_valid = np.vstack([np.expand_dims(upsample(pred.astype(np.float)), axis=0) \
+                            for pred in pred_valid])
 
     # INSERT LIGHT CHANNEL TO VALIDATION PREDICTIONS
     # Shape -> (100, 256, 256, 3)
-    pred_valid = np.asarray([np.expand_dims(np.insert(pred_valid[i], 0, x_valid[i], axis=2), axis=0)\
-                                for i in range(len(pred_valid))])
+    pred_valid = np.vstack([np.expand_dims(np.insert(pred_valid[i], 0, x_valid[i], axis=2), axis=0) \
+                            for i in range(len(pred_valid))])
 
     # CONVERT VALIDATION PREDICTIONS TO RGB IMAGES
     # Shape -> (100, 256, 256, 3)
-    pred_valid = np.asarray([np.expand_dims((cvt2rgb(pred) * 255.).astype(np.uint8), axis=0)\
-                                for pred in pred_valid])
+    pred_valid = np.vstack([np.expand_dims((cvt2rgb(pred) * 255.).astype(np.uint8), axis=0) \
+                            for pred in pred_valid])
 
     np.save('validation_estimations.npy', pred_valid)
 
